@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestore Quiz a Risposta Multipla</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 3px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: #f8f9fa;
+            border: none;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: #e9ecef;
+            color: #495057;
+        }
+
+        .tab.active {
+            background: white;
+            color: #4facfe;
+            box-shadow: 0 -3px 0 #4facfe;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1em;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: #4facfe;
+            background: white;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .answer-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .answer-group:hover {
+            border-color: #4facfe;
+            transform: translateX(5px);
+        }
+
+        .answer-group input[type="radio"] {
+            margin-right: 15px;
+            transform: scale(1.2);
+            accent-color: #4facfe;
+        }
+
+        .answer-group input[type="text"] {
+            flex: 1;
+            background: white;
+            margin: 0;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(79, 172, 254, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(45deg, #56ab2f 0%, #a8e6cf 100%);
+            color: white;
+            box-shadow: 0 6px 20px rgba(86, 171, 47, 0.4);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(86, 171, 47, 0.6);
+        }
+
+        .quiz-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .quiz-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+            border-left: 6px solid #4facfe;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .quiz-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .quiz-item h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .quiz-answers {
+            display: grid;
+            gap: 10px;
+        }
+
+        .quiz-answer {
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .quiz-answer:hover {
+            border-color: #4facfe;
+            transform: translateX(10px);
+        }
+
+        .quiz-answer.correct {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .quiz-answer.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+        }
+
+        /* Popup Styles */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .popup {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.8);
+            transition: all 0.3s ease;
+        }
+
+        .popup-overlay.show {
+            display: flex;
+        }
+
+        .popup-overlay.show .popup {
+            transform: scale(1);
+        }
+
+        .popup h2 {
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .popup.correct h2 {
+            color: #28a745;
+        }
+
+        .popup.incorrect h2 {
+            color: #dc3545;
+        }
+
+        .popup p {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            color: #6c757d;
+        }
+
+        .score-board {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .score-board h3 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4em;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 Quiz Manager</h1>
+            <p>Crea e gestisci i tuoi quiz a risposta multipla .... by MAX</p>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('create')">➕ Crea Quiz</button>
+            <button class="tab" onclick="switchTab('play')">🎮 Gioca</button>
+        </div>
+        
+        <!-- Tab Creazione Quiz -->
+        <div id="create-tab" class="tab-content active">
+            <h2 style="margin-bottom: 30px; color: #495057;">✨ Crea un nuovo quiz</h2>
+            <form id="quiz-form">
+                <div class="form-group">
+                    <label for="question">🤔 Domanda:</label>
+                    <textarea id="question" rows="3" placeholder="Inserisci la tua domanda qui..." required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>📝 Risposte (seleziona quella corretta):</label>
+                    <div class="answer-group">
+                        <input type="radio" name="correct" value="0" required>
+                        <input type="text" placeholder="Prima risposta..." required>
+                    </div>
+                    <div class="answer-group">
+                        <input type="radio" name="correct" value="1" required>
+                        <input type="text" placeholder="Seconda risposta..." required>
+                    </div>
+                    <div class="answer-group">
+                        <input type="radio" name="correct" value="2" required>
+                        <input type="text" placeholder="Terza risposta..." required>
+                    </div>
+                    <div class="answer-group">
+                        <input type="radio" name="correct" value="3" required>
+                        <input type="text" placeholder="Quarta risposta..." required>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">💾 Salva Quiz</button>
+            </form>
+            
+            <!-- Sezione Esportazione/Importazione -->
+            <div style="margin-top: 40px; padding-top: 30px; border-top: 3px solid #e9ecef;">
+                <h3 style="margin-bottom: 20px; color: #495057;">📁 Gestione File</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                    <button type="button" class="btn btn-success" onclick="exportQuizzes()">📤 Esporta Quiz (.json)</button>
+                    <button type="button" class="btn btn-primary" onclick="document.getElementById('import-file').click()">📥 Importa Quiz (.json)</button>
+                </div>
+                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importQuizzes(event)">
+                
+                <div style="margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 10px; border-left: 4px solid #17a2b8;">
+                    <h4 style="color: #17a2b8; margin-bottom: 10px;">💡 Gioco per bambini scuole elementari</h4>
+                    <p style="color: #6c757d; margin-bottom: 10px;"><strong>Esportazione:</strong> Puoi salvare nella stessa cartella del file HTML</p>
+                    <p style="color: #6c757d; margin-bottom: 10px;"><strong>Importazione:</strong> Seleziona il file .json dalla cartella dove hai salvato</p>
+                    <p style="color: #6c757d; font-size: 0.9em;"><em>💾 I quiz vengono anche salvati automaticamente nel browser per non perdere il lavoro</em></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tab Quiz -->
+        <div id="play-tab" class="tab-content">
+            <div class="score-board">
+                <h3>📊 Punteggio</h3>
+                <p>Corrette: <span id="correct-count">0</span> | Sbagliate: <span id="incorrect-count">0</span> | Totale: <span id="total-count">0</span></p>
+            </div>
+            
+            <div id="quiz-container">
+                <div class="empty-state">
+                    <div style="font-size: 4em; margin-bottom: 20px;">📝</div>
+                    <h3>Nessun quiz disponibile</h3>
+                    <p>Crea il tuo primo quiz nella sezione "Crea Quiz"</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Popup -->
+    <div id="popup-overlay" class="popup-overlay">
+        <div id="popup" class="popup">
+            <h2 id="popup-title">Risultato</h2>
+            <p id="popup-message">Messaggio</p>
+            <button class="btn btn-primary" onclick="closePopup()">Continua</button>
+        </div>
+    </div>
+
+    <script>
+        let quizzes = JSON.parse(localStorage.getItem('quizzes')) || [];
+        let currentQuizIndex = 0;
+        let score = { correct: 0, incorrect: 0, total: 0 };
+
+        // Carica il punteggio salvato
+        const savedScore = JSON.parse(localStorage.getItem('quizScore'));
+        if (savedScore) {
+            score = savedScore;
+            updateScoreDisplay();
+        }
+
+        function switchTab(tab) {
+            // Rimuovi classe active da tutti i tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            // Attiva il tab selezionato
+            document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.getElementById(`${tab}-tab`).classList.add('active');
+            
+            if (tab === 'play') {
+                displayQuizzes();
+            }
+        }
+
+        document.getElementById('quiz-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const question = document.getElementById('question').value;
+            const answerInputs = document.querySelectorAll('.answer-group input[type="text"]');
+            const correctRadio = document.querySelector('input[name="correct"]:checked');
+            
+            const answers = Array.from(answerInputs).map(input => input.value.trim());
+            const correctAnswer = parseInt(correctRadio.value);
+            
+            // Validazione
+            if (answers.some(answer => answer === '')) {
+                alert('Inserisci tutte le risposte!');
+                return;
+            }
+            
+            const quiz = {
+                id: Date.now(),
+                question: question.trim(),
+                answers: answers,
+                correctAnswer: correctAnswer
+            };
+            
+            quizzes.push(quiz);
+            localStorage.setItem('quizzes', JSON.stringify(quizzes));
+            
+            // Reset form
+            this.reset();
+            
+            // Mostra conferma con animazione
+            showPopup('Quiz salvato! ✨', 'Il tuo quiz è stato aggiunto con successo!', 'correct');
+        });
+
+        function displayQuizzes() {
+            const container = document.getElementById('quiz-container');
+            
+            if (quizzes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 4em; margin-bottom: 20px;">📝</div>
+                        <h3>Nessun quiz disponibile</h3>
+                        <p>Crea il tuo primo quiz nella sezione "Crea Quiz"</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            if (currentQuizIndex >= quizzes.length) {
+                currentQuizIndex = 0;
+            }
+            
+            const quiz = quizzes[currentQuizIndex];
+            
+            container.innerHTML = `
+                <div class="quiz-item">
+                    <h3>❓ Domanda ${currentQuizIndex + 1} di ${quizzes.length}</h3>
+                    <p style="font-size: 1.2em; margin-bottom: 20px; color: #495057;">${quiz.question}</p>
+                    <div class="quiz-answers">
+                        ${quiz.answers.map((answer, index) => `
+                            <div class="quiz-answer" onclick="selectAnswer(${index})">
+                                ${String.fromCharCode(65 + index)}) ${answer}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="resetQuiz()" style="margin-right: 10px;">🔄 Ricomincia</button>
+                        <button class="btn btn-success" onclick="nextQuiz()">⏭️ Salta</button>
+                        <button class="btn btn-success" onclick="exportQuizzes()" style="margin-left: 10px;">📤 Esporta</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function selectAnswer(selectedIndex) {
+            const quiz = quizzes[currentQuizIndex];
+            const isCorrect = selectedIndex === quiz.correctAnswer;
+            
+            // Aggiorna il punteggio
+            if (isCorrect) {
+                score.correct++;
+            } else {
+                score.incorrect++;
+            }
+            score.total++;
+            
+            // Salva il punteggio
+            localStorage.setItem('quizScore', JSON.stringify(score));
+            updateScoreDisplay();
+            
+            // Colora le risposte
+            const answers = document.querySelectorAll('.quiz-answer');
+            answers.forEach((answer, index) => {
+                if (index === quiz.correctAnswer) {
+                    answer.classList.add('correct');
+                } else if (index === selectedIndex && !isCorrect) {
+                    answer.classList.add('incorrect');
+                }
+                answer.style.pointerEvents = 'none';
+            });
+            
+            // Mostra popup dopo un breve delay
+            setTimeout(() => {
+                if (isCorrect) {
+                    showPopup('Corretto! 🎉', `Ottimo lavoro! La risposta "${quiz.answers[quiz.correctAnswer]}" è corretta.`, 'correct');
+                } else {
+                    showPopup('Sbagliato! 😔', `La risposta corretta era: "${quiz.answers[quiz.correctAnswer]}"`, 'incorrect');
+                }
+            }, 1000);
+        }
+
+        function showPopup(title, message, type) {
+            const popup = document.getElementById('popup');
+            const overlay = document.getElementById('popup-overlay');
+            
+            document.getElementById('popup-title').textContent = title;
+            document.getElementById('popup-message').textContent = message;
+            
+            popup.className = `popup ${type}`;
+            overlay.classList.add('show');
+        }
+
+        function closePopup() {
+            document.getElementById('popup-overlay').classList.remove('show');
+            setTimeout(() => {
+                nextQuiz();
+            }, 300);
+        }
+
+        function nextQuiz() {
+            currentQuizIndex = (currentQuizIndex + 1) % quizzes.length;
+            displayQuizzes();
+        }
+
+        function resetQuiz() {
+            currentQuizIndex = 0;
+            score = { correct: 0, incorrect: 0, total: 0 };
+            localStorage.removeItem('quizScore');
+            updateScoreDisplay();
+            displayQuizzes();
+        }
+
+        function updateScoreDisplay() {
+            document.getElementById('correct-count').textContent = score.correct;
+            document.getElementById('incorrect-count').textContent = score.incorrect;
+            document.getElementById('total-count').textContent = score.total;
+        }
+
+        // Funzioni per esportazione/importazione
+        function exportQuizzes() {
+            if (quizzes.length === 0) {
+                alert('Non ci sono quiz da esportare!');
+                return;
+            }
+
+            const dataToExport = {
+                quizzes: quizzes,
+                score: score,
+                exportDate: new Date().toISOString(),
+                version: "1.0"
+            };
+
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            
+            // Nome del file con data e ora
+            const now = new Date();
+            const dateStr = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            link.download = `quiz-${dateStr}_${timeStr}.json`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showPopup('Esportazione completata! 🎉', `I quiz sono stati salvati nella cartella Downloads come "${link.download}"`, 'correct');
+        }
+
+        function importQuizzes(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!file.name.endsWith('.json')) {
+                alert('Seleziona un file .json valido!');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Verifica la struttura del file
+                    if (!data.quizzes || !Array.isArray(data.quizzes)) {
+                        throw new Error('Formato file non valido');
+                    }
+
+                    // Opzioni di importazione
+                    const replace = confirm('Vuoi sostituire i quiz esistenti?\n\nSì = Sostituisci tutto\nNo = Aggiungi ai quiz esistenti\nAnnulla = Non importare');
+                    
+                    if (replace === null) return; // Utente ha cliccato Annulla
+                    
+                    if (replace) {
+                        // Sostituisci tutto
+                        quizzes = data.quizzes;
+                        if (data.score) {
+                            score = data.score;
+                        }
+                    } else {
+                        // Aggiungi ai quiz esistenti
+                        const newQuizzes = data.quizzes.map(quiz => ({
+                            ...quiz,
+                            id: Date.now() + Math.random() // Nuovo ID per evitare duplicati
+                        }));
+                        quizzes = [...quizzes, ...newQuizzes];
+                    }
+
+                    // Salva nel localStorage
+                    localStorage.setItem('quizzes', JSON.stringify(quizzes));
+                    localStorage.setItem('quizScore', JSON.stringify(score));
+                    
+                    // Aggiorna l'interfaccia
+                    updateScoreDisplay();
+                    displayQuizzes();
+                    
+                    const action = replace ? 'sostituiti' : 'aggiunti';
+                    showPopup('Importazione completata! 🎉', `${data.quizzes.length} quiz sono stati ${action} con successo!`, 'correct');
+                    
+                } catch (error) {
+                    console.error('Errore nell\'importazione:', error);
+                    alert('Errore nell\'importazione del file. Assicurati che sia un file JSON valido creato da questa applicazione.');
+                }
+            };
+            
+            reader.readAsText(file);
+            
+            // Reset dell'input file per permettere di selezionare lo stesso file più volte
+            event.target.value = '';
+        }
+
+        // Inizializzazione
+        updateScoreDisplay();
+        if (quizzes.length > 0) {
+            displayQuizzes();
+        }
+    </script>
+</body>
+</html>
